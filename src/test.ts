@@ -49,4 +49,4 @@ const data = {
 }
 
 const tree = new IndexTree(data)
-console.log(tree.getTreeIndex())
+console.log(tree.getAllIndex())

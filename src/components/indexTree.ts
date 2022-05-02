@@ -1,105 +1,190 @@
-type id = string | number;
-type defaultData = {
-  id: id;
-  children: defaultData[];
+type NodeId = string | number; // 必须确保树内唯一
+
+type DefaultData = {
+  id: NodeId;
+  children: DefaultData[];
   [key: string]: any;
 }
-type options = {
+
+type Options = {
   idKey: string; // 指定唯一标识字段，支持形如 node.id，需要与T一至
   childrenKey: string; // 指定子元素数组字段，需要与T一至
 }
 
-class IndexTree<T = defaultData> {
-  private treeIndex: { [key: string]: string };
+class IndexTree<T = DefaultData> {
+  private index: { [key: string]: string };
   private idKey: string;
   private childrenKey: string;
-  public tree: T;
-  constructor(data: T, options?: options) {
-    this.tree = data;
-    this.treeIndex = {}; // 索引
+  public treeData: T;
+  constructor(data: T, options?: Options) {
+    this.treeData = data;
+    this.index = {}; // 索引
     this.idKey = options?.idKey || 'id';
     this.childrenKey = options?.childrenKey || 'children';
-    this.buildIndex(data)
+    this.buildIndex(data);
+  }
+
+  
+
+  // 重新初始化
+  initial(data: T) {
+    this.treeData = data;
+    this.buildIndex(data);
+  }
+
+  getAllIndex() {
+    return { ...this.index };
+  }
+
+  // 追加模式
+  addNode(parentId: NodeId, node: T) {
+    const parentNode = this.getParentNodeById(parentId);
+    if (parentNode) {
+      const children = this.getChildren(parentNode);
+      children.push(node);
+      this.index[this.getNodeId(node)] = `${this.index[parentId]}-${children.length - 1}`
+      this.rebuildNodeById(parentId)
+    }
+    return this;
+  }
+
+  removeNodeById(id: NodeId) {
+    const curPath = this.index[id];
+    if (curPath) {
+      const pathArr = this.parsePath(curPath);
+      const parentNode = this.getParentNodeById(id);
+      if (parentNode) {
+        const parentId = this.getNodeId(parentNode);
+        const curIndex = pathArr[pathArr.length - 1];
+        this.getChildren(parentNode).splice(curIndex, 1);
+        this.deleteIndexById(parentId);
+        this.buildIndex(parentNode, pathArr.slice(0, -1));
+        this.rebuildNodeById(parentId);
+      }
+    }
+    return this;
+  }
+
+  getNodeById(id: NodeId) {
+    const levelPath = this.index[id];
+    if (levelPath) {
+      return this.getNodeByLevelPath(levelPath);
+    }
+  }
+
+  getParentNodeById(id: NodeId) {
+    const levelPath = this.index[id];
+    if (!levelPath) {
+      return;
+    }
+    const levelPathArr = this.parsePath(levelPath);
+    if (levelPathArr.length < 2) {
+      return;
+    }
+    return this.getNodeByLevelArr(levelPathArr.slice(0, levelPathArr.length - 1));
+  }
+
+  // todo move fn
+  // todo insert fn
+
+  getTreeData() {
+    return this.treeData;
   }
 
   private buildIndex(data: T, initalLevel: number[] = [0]) {
-    // const lastInitalLevel = this.getLastArrNode(initalLevel)
-    const levels = [...initalLevel]; // 标识当前访问层级&&node index
+    const levels = [...initalLevel]; // 标识当前访问层级 && node index
     let curNode: T | undefined = data;
-    let i = 0
-    while (levels.length >= initalLevel.length && i < 100) {
-      console.log('levels', levels)
-      i++ 
+    while (levels.length >= initalLevel.length) {
       if (curNode) {
-        this.treeIndex[this.getNodeId(curNode)] = levels.join('-');
-        const childNodes = this.getNodeChildren(curNode);
+        this.index[this.getNodeId(curNode)] = levels.join('-');
+        const childNodes = this.getChildren(curNode);
         if (childNodes.length) {
           levels.push(0);
           curNode = childNodes[0];
         } else {
           levels[levels.length - 1] += 1;
-          curNode = this.getNodeByLevelArr(levels)
+          curNode = this.getNodeByLevelArr(levels);
         }
       } else { // 访问越界
         levels.pop();
         if (levels.length > initalLevel.length) {
           levels[levels.length - 1] += 1;
-          curNode = this.getNodeByLevelArr(levels)
+          curNode = this.getNodeByLevelArr(levels);
         }
       }
     }
-    console.log(i)
   }
 
-  initialFullTree(data: T) {
-    this.tree = data
+  private deleteIndexByPath(path: string) {
+    const pathArr = this.parsePath(path);
+    Object.keys(this.index).forEach((key) => {
+      if (this.index[key].indexOf(path) !== -1) {
+        delete this.index[key];
+      }
+    })
   }
 
-  getTreeIndex() {
-    return { ...this.treeIndex };
+  private deleteIndexById(id: NodeId) {
+    const path = this.index[id];
+    if (path) {
+      this.deleteIndexByPath(path);
+    }
+  }
+
+  // 从id指定节点重建到根节点(包含)
+  private rebuildNodeById(id: NodeId) {
+    const pathArr = this.parsePath(this.index[id]);
+    this.treeData = { ...this.treeData };
+    this.treeData[this.childrenKey] = [...this.getChildren(this.treeData)];
+    let parentNode = this.treeData;
+    for (let i = 1; i < pathArr.length; i++) {
+      const pathIndex = pathArr[i];
+      const childNodes = this.getChildren(parentNode);
+      const curNode = childNodes[pathIndex];
+      childNodes[pathIndex] = {
+        ...curNode,
+        [this.childrenKey]: [...curNode[this.childrenKey]]
+      };
+    }
   }
 
   private getNodeId(node: T) {
     if (!node) {
-      return undefined
+      return ;
     }
     const keys = this.idKey.split('.');
     let val = node[keys[0]];
     for (let i = 1; i < keys.length; i++) {
       val = val[keys[i]];
       if (val === undefined) {
-        return undefined
+        return ;
       }
     }
-    return val
+    return val;
   }
 
-  private getNodeChildren(node: T) {
+  private getChildren(node: T) {
     return node[this.childrenKey];
   }
 
-  private getNodeByLevelPath(str: string, data: T = this.tree) {
-    const numArr = str.split('-').map(v => +v);
+  private getNodeByLevelPath(str: string, data: T = this.treeData) {
+    const numArr = this.parsePath(str);
     return this.getNodeByLevelArr(numArr, data);
   }
 
-  private getNodeByLevelArr(arr: number[], data: T = this.tree) {
+  private getNodeByLevelArr(arr: number[], data: T = this.treeData) {
     let node = data
     for (let i = 1; i < arr.length; i++) {
-      node = this.getNodeChildren(node)[arr[i]];
+      node = this.getChildren(node)[arr[i]];
       if (!node) {
-        return undefined
+        return;
       }
     }
-    return node
+    return node;
   }
 
-  private getLastArrNode<W>(arr: W[]) {
-    const len = arr.length;
-    if (len) {
-      return arr[len - 1];
-    }
-    return undefined;
+  private parsePath(str: string) {
+    return str.split('-').map(v => +v)
   }
 }
 
