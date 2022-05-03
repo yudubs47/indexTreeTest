@@ -38,7 +38,7 @@ class IndexTree<T = DefaultData> {
 
   // 追加模式
   addNode(parentId: NodeId, node: T) {
-    const parentNode = this.getParentNodeById(parentId);
+    const parentNode = this.getNodeById(parentId);
     if (parentNode) {
       const children = this.getChildren(parentNode);
       children.push(node);
@@ -85,7 +85,21 @@ class IndexTree<T = DefaultData> {
   }
 
   // todo move fn
-  // todo insert fn
+  
+  insertNode(id: NodeId, node: T, postion: 'after' | 'before' = 'after') {
+    const tarIndex = this.index[id]
+    const parentNode = this.getParentNodeById(id)
+    if (tarIndex && parentNode) {
+      const nodeIndex = this.getLastNumIndex(tarIndex)
+      const postionIndex = postion === 'before' ? nodeIndex : nodeIndex + 1
+      this.getChildren(parentNode).splice(postionIndex, 0, node)
+      const parentId = this.getNodeId(parentNode)
+      this.deleteIndexById(parentId)
+      this.buildIndex(parentNode, this.parsePath(this.index[parentId]));
+      this.rebuildNodeById(parentId);
+    }
+    return this;
+  }
 
   getTreeData() {
     return this.treeData;
@@ -116,7 +130,6 @@ class IndexTree<T = DefaultData> {
   }
 
   private deleteIndexByPath(path: string) {
-    const pathArr = this.parsePath(path);
     Object.keys(this.index).forEach((key) => {
       if (this.index[key].indexOf(path) !== -1) {
         delete this.index[key];
@@ -185,6 +198,11 @@ class IndexTree<T = DefaultData> {
 
   private parsePath(str: string) {
     return str.split('-').map(v => +v)
+  }
+
+  private getLastNumIndex(str: string) {
+    const arr = this.parsePath(str)
+    return arr[arr.length - 1]
   }
 }
 

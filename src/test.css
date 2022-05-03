@@ -1,0 +1,24 @@
+.line {
+  padding: 8px;
+}
+.view {
+  margin: 10px auto;
+  max-width: 400px;
+}
+.treeLine {
+  padding-left: 14px;
+  /* padding-top: 5px; */
+  /* padding-bottom: 5px; */
+  font-weight: bold;
+  font-size: 14px;
+  /* border-bottom: 1px solid #cccccc; */
+}
+.bottomLine {
+  border-bottom: 1px solid #cccccc;
+}
+.text {
+  border-left: 1px solid #cccccc;
+  padding-left: 8px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
