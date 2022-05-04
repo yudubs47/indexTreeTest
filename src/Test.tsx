@@ -1,5 +1,6 @@
 import React, { FC, useState, useRef, useEffect, useCallback } from "react";
-import IndexTree from "./components/indexTree"; // 补个use版本
+// import IndexTree from "./components/indexTree"; // 补个use版本
+import UseIndexTree from './components/useIndexTree'
 import './test.css'
 
 const defaultData = {
@@ -53,8 +54,7 @@ const defaultData = {
 type Props = {}
 
 const Test: FC<Props> = () => {
-  const treeRef = useRef(new IndexTree(defaultData))
-  const [data, setData] = useState(treeRef.current.getTreeData())
+  const [data, fns] = UseIndexTree(defaultData)
   const [parentId, setParentId] = useState('')
   const [addNode, setAddNode] = useState({
     id: '',
@@ -69,20 +69,18 @@ const Test: FC<Props> = () => {
   }, [])
 
   useEffect(() => {
-    console.log('index', treeRef.current.getAllIndex())
+    console.log('index', fns.getAllIndex())
   }, [data])
 
   const addFn = useCallback(() => {
     if (addNode?.id && parentId) {
-      treeRef.current.addNode(parentId, addNode)
-      setData(treeRef.current.getTreeData())
+      fns.addNode(parentId, addNode)
     }
   }, [addNode?.id, parentId])
 
   const removeFn = useCallback(() => {
     if (addNode?.id) {
-      treeRef.current.removeNodeById(addNode.id)
-      setData(treeRef.current.getTreeData())
+      fns.removeNodeById(addNode.id)
     }
   }, [addNode?.id])
 

@@ -24,8 +24,6 @@ class IndexTree<T = DefaultData> {
     this.buildIndex(data);
   }
 
-  
-
   // 重新初始化
   initial(data: T) {
     this.treeData = data;
@@ -45,7 +43,6 @@ class IndexTree<T = DefaultData> {
       this.index[this.getNodeId(node)] = `${this.index[parentId]}-${children.length - 1}`
       this.rebuildNodeById(parentId)
     }
-    return this;
   }
 
   removeNodeById(id: NodeId) {
@@ -62,7 +59,6 @@ class IndexTree<T = DefaultData> {
         this.rebuildNodeById(parentId);
       }
     }
-    return this;
   }
 
   getNodeById(id: NodeId) {
@@ -98,7 +94,6 @@ class IndexTree<T = DefaultData> {
       this.buildIndex(parentNode, this.parsePath(this.index[parentId]));
       this.rebuildNodeById(parentId);
     }
-    return this;
   }
 
   getTreeData() {
