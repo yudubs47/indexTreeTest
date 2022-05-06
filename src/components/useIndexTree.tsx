@@ -30,32 +30,28 @@ function UseIndexTree<T = DefaultData>(data: T, options?: Options): [T, Fns<T>] 
   const [treeData, setTreeData] = useState(treeRef.current.getTreeData())
   const resetTreeData = useCallback(() => setTreeData(treeRef.current.getTreeData()), [])
   // 简短 啰嗦 有效
-  const fns = useMemo(() => {
-    const curTree = treeRef.current
-    return {
-      initial: (data: T) => {
-        curTree.initial(data)
-        resetTreeData()
-      },
-      getAllIndex: () => curTree.getAllIndex(),
-      addNode: (parentId: NodeId, node: T) => {
-        curTree.addNode(parentId, node)
-        resetTreeData()
-      },
-      removeNodeById: (id: NodeId) => {
-        curTree.removeNodeById(id)
-        resetTreeData()
-      },
-      getNodeById: (id: NodeId) => curTree.getNodeById(id),
-      getParentNodeById: (id: NodeId) => curTree.getParentNodeById(id),
-      insertNode: (parentId: NodeId, node: T, postion: 'after' | 'before' = 'after') => {
-        curTree.insertNode(parentId, node, postion)
-        resetTreeData()
-      },
-      getTreeData: () => curTree.getTreeData(),
-
-    }
-  }, [])
+  const fns = useMemo(() => ({
+    initial: (data: T) => {
+      treeRef.current.initial(data)
+      resetTreeData()
+    },
+    getAllIndex: () => treeRef.current.getAllIndex(),
+    addNode: (parentId: NodeId, node: T) => {
+      treeRef.current.addNode(parentId, node)
+      resetTreeData()
+    },
+    removeNodeById: (id: NodeId) => {
+      treeRef.current.removeNodeById(id)
+      resetTreeData()
+    },
+    getNodeById: (id: NodeId) => treeRef.current.getNodeById(id),
+    getParentNodeById: (id: NodeId) => treeRef.current.getParentNodeById(id),
+    insertNode: (parentId: NodeId, node: T, postion: 'after' | 'before' = 'after') => {
+      treeRef.current.insertNode(parentId, node, postion)
+      resetTreeData()
+    },
+    getTreeData: () => treeRef.current.getTreeData(),
+  }), [])
   return [treeData, fns]
 }
 
