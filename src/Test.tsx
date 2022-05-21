@@ -1,6 +1,6 @@
 import React, { FC, useState, useRef, useEffect, useCallback } from "react";
-// import IndexTree from "./components/indexTree"; // 补个use版本
 import UseIndexTree from './components/useIndexTree'
+import useRootState from './components/useRootState'
 import './test.css'
 
 const defaultData = {
@@ -60,6 +60,7 @@ const Test: FC<Props> = () => {
     id: '',
     children: []
   })
+  const { value, updateValue } = useRootState('root')
 
   const changeFn = useCallback((e) => {
     setAddNode({
@@ -94,6 +95,8 @@ const Test: FC<Props> = () => {
     )
   }
 
+  const plusFn = useCallback(() => updateValue({ type: 'plus' }), [])
+
   return (
     <div>
       <div className="line">parentId: <input type="text" value={parentId} onChange={(e) => setParentId(e.target.value)} /> </div>
@@ -103,6 +106,9 @@ const Test: FC<Props> = () => {
       <div className="view">
         {create(data)}
       </div>
+      <p>
+        测试useRootState<button onClick={plusFn}>plus{value}</button>
+      </p>
     </div>
   )
 }
